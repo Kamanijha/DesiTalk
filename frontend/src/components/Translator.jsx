@@ -13,6 +13,7 @@ const LANGUAGES = [
 export default function Translator({ user }){
   const [target, setTarget] = useState('hi')
   const [listening, setListening] = useState(false)
+  const [processing, setProcessing] = useState(false)
   const [subtitles, setSubtitles] = useState([])
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
@@ -29,6 +30,9 @@ export default function Translator({ user }){
         setSubtitles(s => [...s, `${from}: ${text}`]);
       }
     });
+
+    socket.on('connect', () => console.log('socket connected', socket.id));
+    socket.on('connect_error', (err) => console.error('socket connect error', err));
 
     return () => socket.off('receive-audio');
   },[])
@@ -53,6 +57,8 @@ export default function Translator({ user }){
         form.append('file', blob, 'speech.webm');
 
         try {
+          console.log('uploading audio blob to /api/whisper')
+          setProcessing(true)
           // 1) Whisper
           const wresp = await axios.post('/api/whisper', form, { headers: { 'Content-Type': 'multipart/form-data' } });
           const originalText = wresp.data.text || '';
@@ -67,6 +73,7 @@ export default function Translator({ user }){
           const audioBase64 = ttresp.data.audioBase64;
 
           // 4) Emit to room
+          console.log('emitting send-audio via socket')
           socket.emit('send-audio', { audioBase64, text: translated, from: user.username });
 
           // play locally
@@ -74,12 +81,14 @@ export default function Translator({ user }){
           audio.play().catch(()=>{});
         } catch (err) {
           console.error('Processing error', err);
+          try { alert('Processing error: ' + (err?.message || err)) } catch(e){}
         } finally {
           // stop and cleanup tracks
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             streamRef.current = null;
           }
+          setProcessing(false)
         }
       }
 
@@ -141,6 +150,7 @@ export default function Translator({ user }){
             🎤
           </div>
           <div style={{marginTop:12}} className="mic-label">{listening ? 'Release to send' : 'Tap to Speak'}</div>
+          {processing && <div style={{marginTop:8, fontSize:13, color:'#666'}}>Processing...</div>}
         </div>
       </div>
     </div>
