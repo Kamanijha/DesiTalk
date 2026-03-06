@@ -111,30 +111,36 @@ export default function Translator({ user }){
   }
 
   return (
-    <div>
-      <h3>Logged in as {user.username}</h3>
-      <div className="controls">
-        <select value={target} onChange={e=>setTarget(e.target.value)}>
-          {LANGUAGES.map(l=> (
-            <option key={l.code} value={l.code}>{l.name}</option>
-          ))}
-        </select>
-        <button
-          className="mic-btn"
-          onMouseDown={handlePointerDown}
-          onMouseUp={handlePointerUp}
-          onMouseLeave={handlePointerUp}
-          onTouchStart={handlePointerDown}
-          onTouchEnd={handlePointerUp}
-        >
-          {listening ? 'Release to Send' : 'Hold to Talk'}
-        </button>
+    <div className="translator-root">
+      <div className="chat-top">
+        <div>
+          <strong>You:</strong> {user?.username || 'Guest'} • <small>{user?.language || ''}</small>
+        </div>
+        <div>
+          <strong>Room:</strong> {user?.room || '—'}
+        </div>
       </div>
 
-      <div className="subtitles">
-        <strong>Subtitles:</strong>
-        <div>
-          {subtitles.map((s,i)=>(<div key={i}>{s}</div>))}
+      <div className="chat-main">
+        <div className="subtitles" style={{flex:1}}>
+          <strong>Subtitles:</strong>
+          <div>
+            {subtitles.map((s,i)=>(<div className="subtitle-line" key={i}>{s}</div>))}
+          </div>
+        </div>
+
+        <div style={{width:180, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
+          <div
+            className={`mic-large`}
+            onMouseDown={handlePointerDown}
+            onMouseUp={handlePointerUp}
+            onMouseLeave={handlePointerUp}
+            onTouchStart={handlePointerDown}
+            onTouchEnd={handlePointerUp}
+          >
+            🎤
+          </div>
+          <div style={{marginTop:12}} className="mic-label">{listening ? 'Release to send' : 'Tap to Speak'}</div>
         </div>
       </div>
     </div>
